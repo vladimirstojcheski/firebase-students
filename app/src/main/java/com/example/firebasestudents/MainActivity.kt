@@ -18,6 +18,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
+    private var index: String? = ""
+
     private val mAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,5 +82,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun loggedIn(): Boolean {
         return mAuth.currentUser != null
+    }
+
+    fun setIndex(index: String)
+    {
+        this.index = index
+    }
+
+    fun getIndex(): String?
+    {
+        return this.index
     }
 }

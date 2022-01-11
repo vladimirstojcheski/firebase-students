@@ -9,11 +9,16 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.firebasestudents.adapter.StudentAdapter
 import com.example.firebasestudents.databinding.FragmentFirstBinding
 import com.example.firebasestudents.model.Student
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -48,12 +53,43 @@ class FirstFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val activity = activity as MainActivity
 
         etIndex = view.findViewById(R.id.etIndexId)
         etName = view.findViewById(R.id.etNameId)
         etSurname = view.findViewById(R.id.etSurnameId)
         etPhoneNumber = view.findViewById(R.id.etNumberId)
         etAddress = view.findViewById(R.id.etAddressId)
+        etIndex.isEnabled = true
+
+        if (!activity.getIndex().isNullOrEmpty()) {
+            val studentListener = object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    for(data in dataSnapshot.children)
+                    {
+                        val student = data.getValue(Student::class.java)
+                        if (student?.index == activity.getIndex()) {
+                            etIndex.setText(student!!.index)
+                            etIndex.isEnabled = false
+                            etName.setText(student.name)
+                            etSurname.setText(student.surname)
+                            etPhoneNumber.setText(student.phoneNumber)
+                            etAddress.setText(student.address)
+                            break
+                        }
+                    }
+
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    // Getting Post failed, log a message
+
+                }
+            }
+
+            studentsReference.addValueEventListener(studentListener)
+        }
+
 
         val addStudentButton = view.findViewById<Button>(R.id.btnAddStudentId)
 
@@ -65,6 +101,7 @@ class FirstFragment : Fragment() {
             val surname = etSurname.text.toString()
             val phoneNumber = etPhoneNumber.text.toString()
             val address = etAddress.text.toString()
+
 
             if(index.isEmpty() || name.isEmpty() || surname.isEmpty()
                 || phoneNumber.isEmpty() || address.isEmpty())

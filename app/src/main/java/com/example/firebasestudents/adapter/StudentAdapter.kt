@@ -6,13 +6,19 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.example.firebasestudents.MainActivity
 import com.example.firebasestudents.R
 import com.example.firebasestudents.model.Student
+import com.google.firebase.database.*
 
 class StudentAdapter (var allStudents: MutableList<Student>) : RecyclerView.Adapter<StudentAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+
+        val studentReference: DatabaseReference
 
         val index: TextView
         val name: TextView
@@ -20,6 +26,7 @@ class StudentAdapter (var allStudents: MutableList<Student>) : RecyclerView.Adap
 
         val editStudent: Button
         val deleteStudent: Button
+        val activity: MainActivity
 
         init {
             index = view.findViewById(R.id.tvIndexId)
@@ -27,6 +34,9 @@ class StudentAdapter (var allStudents: MutableList<Student>) : RecyclerView.Adap
             surname = view.findViewById(R.id.tvSurnameId)
             editStudent = view.findViewById(R.id.btnEditStudentId)
             deleteStudent = view.findViewById(R.id.btnDeleteStudentId)
+            studentReference = FirebaseDatabase.getInstance().getReference("students")
+            activity = view.context as MainActivity
+
         }
     }
 
@@ -44,13 +54,27 @@ class StudentAdapter (var allStudents: MutableList<Student>) : RecyclerView.Adap
         holder.surname.text = currentStudent.surname.toString()
 
         holder.editStudent.setOnClickListener {
-            Toast.makeText(holder.itemView.context, "Edit " + currentStudent.index.toString(), Toast.LENGTH_SHORT).show()
+            holder.activity.setIndex(currentStudent.index!!)
+            Navigation.findNavController(holder.itemView).navigate(R.id.action_SecondFragment_to_FirstFragment)
         }
 
         holder.deleteStudent.setOnClickListener {
-            Toast.makeText(holder.itemView.context, "Delete " + currentStudent.index.toString(), Toast.LENGTH_SHORT).show()
-        }
+            val studentQuery = holder.studentReference.orderByChild("index").equalTo(currentStudent.index.toString())
 
+            studentQuery.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    for (studentSnapshot in snapshot.children)
+                    {
+                        studentSnapshot.ref.removeValue()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                }
+
+            })
+
+        }
 
     }
 
