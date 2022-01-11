@@ -114,6 +114,7 @@ class FirstFragment : Fragment() {
         }
 
         listStudentsButton.setOnClickListener {
+            activity.setIndex("")
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
 
@@ -122,24 +123,72 @@ class FirstFragment : Fragment() {
     private fun addStudent(index: String, name: String, surname: String, phoneNumber: String,
                            address: String) {
 
+        val activity = activity as MainActivity
+
         val currentStudent = Student(index, name, surname, phoneNumber, address)
 
-        studentsReference.push().setValue(currentStudent)
-            .addOnCompleteListener(OnCompleteListener { task ->
-                if(task.isSuccessful)
-                {
-                    Toast.makeText(activity, "Add is successful", Toast.LENGTH_SHORT).show()
-                    etIndex.setText("")
-                    etName.setText("")
-                    etSurname.setText("")
-                    etPhoneNumber.setText("")
-                    etAddress.setText("")
+        if (!activity.getIndex().isNullOrEmpty()) {
+            val studentListener = object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+
+                    for (data in dataSnapshot.children) {
+                        val student = data.getValue(Student::class.java)
+                        if (student?.index == activity.getIndex()) {
+                            val studentQuery = studentsReference.orderByChild("index").equalTo(student!!.index.toString())
+
+                            studentQuery.addListenerForSingleValueEvent(object : ValueEventListener {
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    for (studentSnapshot in snapshot.children)
+                                    {
+                                        studentSnapshot.ref.setValue(currentStudent)
+                                    }
+                                    Toast.makeText(activity, "Edit is successful", Toast.LENGTH_SHORT).show()
+                                    etIndex.setText("")
+                                    etIndex.isEnabled = true
+                                    etName.setText("")
+                                    etSurname.setText("")
+                                    etPhoneNumber.setText("")
+                                    etAddress.setText("")
+                                    activity.setIndex("")
+                                }
+
+                                override fun onCancelled(error: DatabaseError) {
+                                }
+
+                            })
+
+                        }
+                    }
                 }
-                else {
-                    Toast.makeText(activity, "Error: " + task.exception!!.message,
-                        Toast.LENGTH_SHORT).show()
+
+                override fun onCancelled(databaseError: DatabaseError) {
+
+
                 }
-            })
+            }
+            studentsReference.addValueEventListener(studentListener)
+        }
+
+        else {
+
+            studentsReference.push().setValue(currentStudent)
+                .addOnCompleteListener(OnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Toast.makeText(activity, "Add is successful", Toast.LENGTH_SHORT).show()
+                        etIndex.setText("")
+                        etName.setText("")
+                        etSurname.setText("")
+                        etPhoneNumber.setText("")
+                        etAddress.setText("")
+                        activity.setIndex("")
+                    } else {
+                        Toast.makeText(
+                            activity, "Error: " + task.exception!!.message,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                })
+        }
 
     }
 

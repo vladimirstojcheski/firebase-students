@@ -72,9 +72,7 @@ class SecondFragment : Fragment() {
                 studentRecyclerView.setHasFixedSize(true)
                 studentRecyclerView.adapter = adapter
 
-
             }
-
             override fun onCancelled(databaseError: DatabaseError) {
                 // Getting Post failed, log a message
 
@@ -86,6 +84,8 @@ class SecondFragment : Fragment() {
 
 
         binding.buttonSecond.setOnClickListener {
+            val activty = activity as MainActivity
+            activty.setIndex("")
             findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
         }
 
